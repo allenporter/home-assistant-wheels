@@ -17,11 +17,13 @@ APK="build-base;cmake;git;linux-headers;libexecinfo-dev;bluez-dev;libffi-dev;ope
 PIP="Cython;numpy;scikit-build"
 
 IMAGE_NAME="wheels-builder-${ARCH}-run"
-REMOTE="pi@rpi01.dev:/opt/wheels"
+# Copy out to a local file
+REMOTE="/transfer"
 
 docker rm ${IMAGE_NAME} || echo "No existing image"
 
 docker create --rm --name "${IMAGE_NAME}" -t \
+     -v /tmp:/transfer \
      --workdir /data \
      --env-file=docker/env_file \
      "wheels-builder-${ARCH}" \
@@ -35,6 +37,5 @@ docker create --rm --name "${IMAGE_NAME}" -t \
      --constraint=docker/constraint.txt 
 
 docker cp . "${IMAGE_NAME}:/data"
-docker cp -a .ssh/ "${IMAGE_NAME}:/root/.ssh"
 
 echo "Run with: docker start -a ${IMAGE_NAME}"
