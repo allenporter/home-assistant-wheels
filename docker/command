@@ -17,6 +17,7 @@ APK="build-base;cmake;git;linux-headers;libexecinfo-dev;bluez-dev;libffi-dev;ope
 PIP="Cython;numpy;scikit-build"
 
 IMAGE_NAME="wheels-builder-${ARCH}-run"
+REMOTE="pi@rpi01.dev:/opt/wheels"
 
 docker rm ${IMAGE_NAME} || echo "No existing image"
 
@@ -26,14 +27,14 @@ docker create --rm --name "${IMAGE_NAME}" -t \
      "wheels-builder-${ARCH}" \
      --apk="${APK}" \
      --pip="${PIP}" \
-     --test \
      --index "${INDEX}" \
-     --remote "ignored" \
+     --remote "${REMOTE}" \
      --tag "${TAG}" \
      --skip-binary="grpcio" \
      --requirement=docker/requirements_all.txt \
      --constraint=docker/constraint.txt 
 
 docker cp . "${IMAGE_NAME}:/data"
+docker cp -a .ssh/ "${IMAGE_NAME}:/root/.ssh"
 
 echo "Run with: docker start -a ${IMAGE_NAME}"
