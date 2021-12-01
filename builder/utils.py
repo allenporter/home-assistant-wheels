@@ -1,11 +1,14 @@
 """Some utils for builder."""
 import os
+import logging
 from pathlib import Path
 import subprocess
 import sys
 from typing import Dict, Optional
 
 import requests
+
+_LOGGER = logging.getLogger(__name__)
 
 
 def alpine_version() -> str:
@@ -30,6 +33,8 @@ def run_command(
     cmd: str, env: Optional[Dict[str, str]] = None, timeout: Optional[int] = None
 ) -> None:
     """Implement subprocess.run but handle timeout different."""
+    _LOGGER.info(cmd)
+    print(cmd)
     subprocess.run(
         cmd,
         shell=True,

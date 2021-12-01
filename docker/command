@@ -1,0 +1,39 @@
+#!/bin/bash
+
+set -ex
+
+ARCH=armv7
+TAG="3.9-alpine3.14"
+BASE_NAME=homeassistant/${ARCH}-base-python:${TAG}
+IMAGE="wheels-builder-${ARCH}"
+
+docker build . \
+    -t "${IMAGE}" \
+    --build-arg BUILD_FROM=${BASE_NAME} \
+    --build-arg BUILD_ARCH=${ARCH}
+
+INDEX="https://wheels.home-assistant.io"
+APK="build-base;cmake;git;linux-headers;libexecinfo-dev;bluez-dev;libffi-dev;openssl-dev;glib-dev;eudev-dev;libxml2-dev;libxslt-dev;libpng-dev;libjpeg-turbo-dev;tiff-dev;autoconf;automake;cups-dev;gmp-dev;mpfr-dev;mpc1-dev;ffmpeg-dev;gammu-dev;cargo"
+PIP="Cython;numpy;scikit-build"
+
+IMAGE_NAME="wheels-builder-${ARCH}-run"
+
+docker rm ${IMAGE_NAME} || echo "No existing image"
+
+docker create --rm --name "${IMAGE_NAME}" -t \
+     --workdir /data \
+     --env-file=docker/env_file \
+     "wheels-builder-${ARCH}" \
+     --apk="${APK}" \
+     --pip="${PIP}" \
+     --test \
+     --index "${INDEX}" \
+     --remote "ignored" \
+     --tag "${TAG}" \
+     --skip-binary="grpcio" \
+     --requirement=docker/requirements_all.txt \
+     --constraint=docker/constraint.txt 
+
+docker cp . "${IMAGE_NAME}:/data"
+
+echo "Run with: docker start -a ${IMAGE_NAME}"
