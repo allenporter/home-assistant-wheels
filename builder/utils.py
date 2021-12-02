@@ -33,8 +33,10 @@ def run_command(
     cmd: str, env: Optional[Dict[str, str]] = None, timeout: Optional[int] = None
 ) -> None:
     """Implement subprocess.run but handle timeout different."""
-    _LOGGER.info(cmd)
-    print(cmd)
+    _LOGGER.info("cmd=%s", cmd)
+    _LOGGER.info("env=%s", env)
+    print("cmd=%s" % cmd)
+    print("env=%s" % env)
     subprocess.run(
         cmd,
         shell=True,

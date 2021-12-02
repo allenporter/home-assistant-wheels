@@ -20,7 +20,7 @@ IMAGE_NAME="wheels-builder-${ARCH}-run"
 # Copy out to a local file
 REMOTE="/transfer"
 
-docker rm ${IMAGE_NAME} || echo "No existing image"
+docker rm -f ${IMAGE_NAME} || echo "No existing image"
 
 docker create --rm --name "${IMAGE_NAME}" -t \
      -v /tmp:/transfer \
