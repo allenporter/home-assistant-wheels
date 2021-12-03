@@ -29,8 +29,9 @@ def build_wheels_package(
     # Add constraint
     constraint_cmd = f"--constraint {constraint}" if constraint else ""
 
+    run_command(f"export")
     run_command(
-        f'pip3 wheel --disable-pip-version-check --progress-bar off --no-clean --no-binary "{skip_binary}" --wheel-dir {output} --find-links {index} {constraint_cmd} "{package}"',
+        f'pip3 wheel --disable-pip-version-check --progress-bar off --no-clean --no-binary "{skip_binary}" --wheel-dir {output} --log /transfer/pip.log --find-links {index} {constraint_cmd} "{package}"',
         env=build_env,
         timeout=timeout,
     )
@@ -59,7 +60,7 @@ def build_wheels_requirement(
     constraint_cmd = f"--constraint {constraint}" if constraint else ""
 
     run_command(
-        f'pip3 wheel --disable-pip-version-check --progress-bar off --no-clean --no-binary "{skip_binary}" --wheel-dir {output} --find-links {index} {constraint_cmd} --requirement {requirement}',
+        f'pip3 wheel --disable-pip-version-check --progress-bar off --no-clean --no-binary "{skip_binary}" --wheel-dir {output} --log=/transfer/pip.wheel.log --find-links {index} {constraint_cmd} --requirement {requirement}',
         env=build_env,
         timeout=timeout,
     )

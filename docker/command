@@ -33,6 +33,7 @@ docker create --rm --name "${IMAGE_NAME}" -t \
      --remote "${REMOTE}" \
      --tag "${TAG}" \
      --skip-binary="grpcio" \
+     --auditwheel \
      --requirement=docker/requirements_all.txt \
      --constraint=docker/constraint.txt 
 
