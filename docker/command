@@ -3,9 +3,14 @@
 set -ex
 
 ARCH=armv7
-TAG="3.9-alpine3.14"
+#TAG="3.9-alpine3.14"
+TAG="3.8-alpine3.14"
 BASE_NAME=homeassistant/${ARCH}-base-python:${TAG}
 IMAGE="wheels-builder-${ARCH}"
+GRPC_VERSION="1.31.0"
+
+REQUIREMENTS_FILE="docker/requirements-${GRPC_VERSION}"
+echo "grpcio==${GRPC_VERSION}" > ${REQUIREMENTS_FILE}
 
 docker build . \
     -t "${IMAGE}" \
@@ -16,7 +21,7 @@ INDEX="https://wheels.home-assistant.io"
 APK="build-base;cmake;git;linux-headers;libexecinfo-dev;bluez-dev;libffi-dev;openssl-dev;glib-dev;eudev-dev;libxml2-dev;libxslt-dev;libpng-dev;libjpeg-turbo-dev;tiff-dev;autoconf;automake;cups-dev;gmp-dev;mpfr-dev;mpc1-dev;ffmpeg-dev;gammu-dev;cargo"
 PIP="Cython;numpy;scikit-build"
 
-IMAGE_NAME="wheels-builder-${ARCH}-run"
+IMAGE_NAME="wheels-builder-${ARCH}-${TAG}-grcpc${GRPC_VERSION}-run"
 # Copy out to a local file
 REMOTE="/transfer"
 
@@ -34,7 +39,7 @@ docker create --rm --name "${IMAGE_NAME}" -t \
      --tag "${TAG}" \
      --skip-binary="grpcio" \
      --auditwheel \
-     --requirement=docker/requirements_all.txt \
+     --requirement=${REQUIREMENTS_FILE} \
      --constraint=docker/constraint.txt 
 
 docker cp . "${IMAGE_NAME}:/data"
