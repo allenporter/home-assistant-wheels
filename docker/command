@@ -3,45 +3,95 @@
 set -ex
 
 ARCH=armv7
-#TAG="3.9-alpine3.14"
-TAG="3.8-alpine3.14"
+
+if [ "${PYTHON_VERSION}" == "" ]; then
+  echo "Required environment PYTHON_VERSION not set"
+  exit 1
+fi
+
+if [ "${ALPINE_VERSION}" == "" ]; then
+  echo "Required environment ALPINE_VERSION not set"
+  exit 1
+fi
+if [ "${GRPC_VERSION}" == "" ]; then
+  echo "Required environment GRPC_VERSION not set"
+  exit 1
+fi
+
+WHEEL_PY=${PYTHON_VERSION/./}
+
+ALPINE="alpine${ALPINE_VERSION}"
+ALPINE_OUT="alpine-${ALPINE_VERSION}"
+
+TAG="${PYTHON_VERSION}-${ALPINE}"
 BASE_NAME=homeassistant/${ARCH}-base-python:${TAG}
-IMAGE="wheels-builder-${ARCH}"
-GRPC_VERSION="1.31.0"
+IMAGE="wheels-builder-${ARCH}:${TAG}"
+RUNNER_DOCKER=local-home-assistant-wheel
 
-REQUIREMENTS_FILE="docker/requirements-${GRPC_VERSION}"
-echo "grpcio==${GRPC_VERSION}" > ${REQUIREMENTS_FILE}
+WHEEL="grpcio-${GRPC_VERSION}-cp${WHEEL_PY}-none-any.whl"
+BUILDER_IMAGE_NAME="grpc-wheel-builder-${ARCH}-${TAG}"
 
-docker build . \
+function create_builder() {
+  docker build . \
     -t "${IMAGE}" \
     --build-arg BUILD_FROM=${BASE_NAME} \
     --build-arg BUILD_ARCH=${ARCH}
 
-INDEX="https://wheels.home-assistant.io"
-APK="build-base;cmake;git;linux-headers;libexecinfo-dev;bluez-dev;libffi-dev;openssl-dev;glib-dev;eudev-dev;libxml2-dev;libxslt-dev;libpng-dev;libjpeg-turbo-dev;tiff-dev;autoconf;automake;cups-dev;gmp-dev;mpfr-dev;mpc1-dev;ffmpeg-dev;gammu-dev;cargo"
-PIP="Cython;numpy;scikit-build"
+  REQUIREMENTS_FILE="docker/requirements-${GRPC_VERSION}"
+  echo "grpcio==${GRPC_VERSION}" > ${REQUIREMENTS_FILE}
 
-IMAGE_NAME="wheels-builder-${ARCH}-${TAG}-grcpc${GRPC_VERSION}-run"
-# Copy out to a local file
-REMOTE="/transfer"
+  INDEX="https://wheels.home-assistant.io"
+  APK="build-base;cmake;git;linux-headers;libexecinfo-dev;bluez-dev;libffi-dev;openssl-dev;glib-dev;eudev-dev;libxml2-dev;libxslt-dev;libpng-dev;libjpeg-turbo-dev;tiff-dev;autoconf;automake;cups-dev;gmp-dev;mpfr-dev;mpc1-dev;ffmpeg-dev;gammu-dev;cargo"
+  PIP="Cython;numpy;scikit-build"
 
-docker rm -f ${IMAGE_NAME} || echo "No existing image"
+  # Copy out to a local file
+  REMOTE="/transfer"
 
-docker create --rm --name "${IMAGE_NAME}" -t \
-     -v /tmp:/transfer \
+  docker rm -f ${BUILDER_IMAGE_NAME} || echo "No existing image"
+
+  # Disabled --auditwheel
+  docker create --rm --name "${BUILDER_IMAGE_NAME}" -t \
+     -v /tmp:${REMOTE} \
      --workdir /data \
      --env-file=docker/env_file \
-     "wheels-builder-${ARCH}" \
+     ${IMAGE} \
      --apk="${APK}" \
      --pip="${PIP}" \
      --index "${INDEX}" \
      --remote "${REMOTE}" \
      --tag "${TAG}" \
      --skip-binary="grpcio" \
-     --auditwheel \
      --requirement=${REQUIREMENTS_FILE} \
      --constraint=docker/constraint.txt 
 
-docker cp . "${IMAGE_NAME}:/data"
+  docker cp . "${BUILDER_IMAGE_NAME}:/data"
 
-echo "Run with: docker start -a ${IMAGE_NAME}"
+}
+
+function build() {
+  docker start -a ${BUILDER_IMAGE_NAME}
+}
+
+function test_wheel() {
+  cp /tmp/${ALPINE_OUT}/${ARCH}/${WHEEL} docker/${RUNNER_DOCKER}/
+
+  RUNNER_IMAGE_NAME="grpc-runner-${ARCH}:${TAG}"
+  docker build -t ${RUNNER_IMAGE_NAME} --build-arg="WHEEL=${WHEEL}" --build-arg BUILD_FROM=${BASE_NAME} docker/${RUNNER_DOCKER}
+  docker run ${RUNNER_IMAGE_NAME}
+}
+
+case $1 in
+  create_builder)
+    create_builder
+    ;;
+  build)
+    build
+    ;;
+  test_wheel)
+    test_wheel
+    ;;
+  *)
+    echo "Usage: $0 [ create_builder | build | test_wheel ]"
+    exit 1
+    ;;
+esac

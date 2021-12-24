@@ -129,7 +129,11 @@ def builder(
         elif single:
             # Build every wheel like a single installation
             packages = extract_packages(requirement, requirement_diff)
-            skip_binary = check_available_binary(wheels_index, skip_binary, packages)
+            # ignore binary
+            new_skip_binary = check_available_binary(wheels_index, skip_binary, packages)
+            if new_skip_binary != skip_binary:
+              print("Ignoring request to change binary flags: (%s, %s)" % (skip_binary, new_skip_binary))
+
             for package in packages:
                 print(f"Process package: {package}", flush=True)
                 try:
@@ -153,7 +157,9 @@ def builder(
             temp_requirement = Path("/tmp/wheels_requirement.txt")
             write_requirement(temp_requirement, packages)
 
-            skip_binary = check_available_binary(wheels_index, skip_binary, packages)
+            new_skip_binary = check_available_binary(wheels_index, skip_binary, packages)
+            if new_skip_binary != skip_binary:
+              print("Ignoring request to change binary flags: (%s, %s)" % (skip_binary, new_skip_binary))
             try:
                 build_wheels_requirement(
                     temp_requirement,
