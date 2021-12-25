@@ -65,7 +65,6 @@ function create_builder() {
      --constraint=docker/constraint.txt 
 
   docker cp . "${BUILDER_IMAGE_NAME}:/data"
-
 }
 
 function build() {
