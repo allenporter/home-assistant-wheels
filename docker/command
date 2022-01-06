@@ -2,7 +2,7 @@
 
 set -ex
 
-ARCH=armv7
+ARCH=${ARCH:-armv7}
 
 if [ "${PYTHON_VERSION}" == "" ]; then
   echo "Required environment PYTHON_VERSION not set"

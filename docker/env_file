@@ -2,4 +2,4 @@ GRPC_BUILD_WITH_BORING_SSL_ASM=false
 GRPC_PYTHON_BUILD_SYSTEM_OPENSSL=true
 GRPC_PYTHON_BUILD_WITH_CYTHON=true
 GRPC_PYTHON_DISABLE_LIBC_COMPATIBILITY=true
-GRPC_PYTHON_LDFLAGS="-lpthread -Wl,-wrap,memcpy -static-libgcc -lexecinfo"
+GRPC_PYTHON_LDFLAGS=-lpthread -Wl,-wrap,memcpy -static-libgcc -lexecinfo
