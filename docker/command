@@ -60,7 +60,7 @@ function create_builder() {
      --index "${INDEX}" \
      --remote "${REMOTE}" \
      --tag "${TAG}" \
-     --skip-binary="grpcio" \
+     --skip-binary="aiohttp,grpcio" \
      --requirement=${REQUIREMENTS_FILE} \
      --constraint=docker/constraint.txt 
 
